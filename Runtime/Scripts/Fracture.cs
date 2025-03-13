@@ -66,27 +66,33 @@ public class Fracture : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (triggerOptions.triggerType == TriggerType.Collision)
+        //Check if we are supposed to react to a collision
+        if (triggerOptions.triggerType != TriggerType.Collision) return; 
+        if (collision.contactCount <= 0) return;
+
+        ContactPoint contact = collision.contacts[0];
+
+        if (triggerOptions.filterCollisionsByTag)
         {
-            if (collision.contactCount > 0)
+            // Colliding object tag must be in the set of allowed collision tags if filtering by tag is enabled
+            if (triggerOptions.IsTagAllowed(contact.otherCollider.gameObject.tag) == false)
             {
-                // Collision force must exceed the minimum force (F = I / T)
-                var contact = collision.contacts[0];
-                float collisionForce = collision.impulse.magnitude / Time.fixedDeltaTime;
-
-                // Colliding object tag must be in the set of allowed collision tags if filtering by tag is enabled
-                bool tagAllowed = triggerOptions.IsTagAllowed(contact.otherCollider.gameObject.tag);
-
-                // Object is unfrozen if the colliding object has the correct tag (if tag filtering is enabled)
-                // and the collision force exceeds the minimum collision force.
-                if (collisionForce > triggerOptions.minimumCollisionForce &&
-                   (triggerOptions.filterCollisionsByTag && tagAllowed))
-                {
-                    callbackOptions.CallOnFracture(contact.otherCollider, gameObject, contact.point);
-                    this.ComputeFracture();
-                }
+                //Hit by object that is not tagged with an allowed tag, don't do anything
+                return;
             }
         }
+
+        // Collision force must exceed the minimum force (F = I / T)
+        float collisionForce = collision.impulse.magnitude / Time.fixedDeltaTime;
+
+        // Object is unfrozen if the collision force exceeds the minimum collision force.
+        if (collisionForce > triggerOptions.minimumCollisionForce)
+        {
+            callbackOptions.CallOnFracture(contact.otherCollider, gameObject, contact.point);
+            this.ComputeFracture();
+        }
+        
+        
     }
 
     void OnTriggerEnter(Collider collider)
