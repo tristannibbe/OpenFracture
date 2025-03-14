@@ -72,14 +72,14 @@ public class Fracture : MonoBehaviour
 
         ContactPoint contact = collision.contacts[0];
 
-        if (triggerOptions.filterCollisionsByTag)
+        // Colliding object tag must be in the set of allowed 
+        // collision tags if filtering by tag is enabled
+        if (triggerOptions.filterCollisionsByTag                              == true &&
+            triggerOptions.IsTagAllowed(contact.otherCollider.gameObject.tag) == false)
         {
-            // Colliding object tag must be in the set of allowed collision tags if filtering by tag is enabled
-            if (triggerOptions.IsTagAllowed(contact.otherCollider.gameObject.tag) == false)
-            {
-                //Hit by object that is not tagged with an allowed tag, don't do anything
-                return;
-            }
+            //Hit by object that is not tagged with an allowed tag,
+            //don't do anything
+            return;
         }
 
         // Collision force must exceed the minimum force (F = I / T)
@@ -97,17 +97,21 @@ public class Fracture : MonoBehaviour
 
     void OnTriggerEnter(Collider collider)
     {
-        if (triggerOptions.triggerType == TriggerType.Trigger)
-        {
-            // Colliding object tag must be in the set of allowed collision tags if filtering by tag is enabled
-            bool tagAllowed = triggerOptions.IsTagAllowed(collider.gameObject.tag);
+        //Check if we are supposed to react to a trigger
+        if (triggerOptions.triggerType != TriggerType.Trigger) return;
 
-            if (triggerOptions.filterCollisionsByTag && tagAllowed)
-            {
-                callbackOptions.CallOnFracture(collider, gameObject, transform.position);
-                this.ComputeFracture();
-            }
+        // Colliding object tag must be in the set of allowed 
+        // collision tags if filtering by tag is enabled
+        if (triggerOptions.filterCollisionsByTag                 == true &&
+            triggerOptions.IsTagAllowed(collider.gameObject.tag) == false)
+        {
+            //Hit by object that is not tagged with an allowed tag,
+            //don't do anything
+            return;   
         }
+
+        callbackOptions.CallOnFracture(collider, gameObject, transform.position);
+        this.ComputeFracture();
     }
 
     void Update()
